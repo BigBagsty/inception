@@ -1,8 +1,7 @@
-
-
 services:
   mariadb:
-    build: ./requirements/mariadb/.
+    build: ./requirements/mariadb
+    image: mariadb
     container_name: mariadb
     restart: always
     networks:
@@ -11,12 +10,13 @@ services:
       - db:/var/lib/mysql
     secrets:
       - db_pass
-      - wp_pass
-    env_file: 
+      - db_root_pass
+    env_file:
       - .env
 
   wordpress:
-    build: ./requirements/wordpress/.
+    build: ./requirements/wordpress
+    image: wordpress
     container_name: wordpress
     restart: always
     networks:
@@ -29,11 +29,16 @@ services:
       - wp_pass
       - db_pass
       - user_pass
-    env_file: 
-      - .env  
-    
+    env_file:
+      - .env
+
   nginx:
-    build: ./requirements/nginx/.
+    build:
+      context: ./requirements/nginx
+      args:
+        DOMAIN_NAME: ${DOMAIN_NAME}
+
+    image: nginx
     container_name: nginx
     restart: always
     ports:
@@ -41,33 +46,35 @@ services:
     volumes:
       - press:/var/www/html
     depends_on:
-      - mariadb
       - wordpress
     networks:
       - inception
-    env_file: 
+    env_file:
       - .env
 
 volumes:
   db:
+    driver: local
     driver_opts:
       type: none
       o: bind
-      device: /home/francisco/data/mariadb
+      device: /home/${LOGIN}/data/mariadb
   press:
+    driver: local
     driver_opts:
       type: none
       o: bind
-      device: /home/francisco/data/wordpress
+      device: /home/${LOGIN}/data/wordpress
 
 secrets:
   db_pass:
     file: ../secrets/db_pass.txt
+  db_root_pass:
+    file: ../secrets/db_root_pass.txt
   wp_pass:
     file: ../secrets/wp_pass.txt
   user_pass:
     file: ../secrets/user_pass.txt
-
 
 networks:
   inception:

@@ -1,22 +1,34 @@
+export LOGIN := $(USER)
+DATA     := /home/$(LOGIN)/data
+COMPOSE  := docker compose --env-file ./srcs/.env -f ./srcs/docker-compose.yml
+
 all: up
 
 up:
-	@docker compose -f ./srcs/docker-compose.yml up -d
+	@mkdir -p $(DATA)/mariadb $(DATA)/wordpress
+	@$(COMPOSE) up -d --build
 
-down: 
-	@docker compose -f ./srcs/docker-compose.yml down
+down:
+	@$(COMPOSE) down
 
-rebuild: clean
-	@docker compose -f ./srcs/docker-compose.yml build --no-cache
+start:
+	@$(COMPOSE) start
 
-logs: 
-	@docker compose -f ./srcs/docker-compose.yml logs mariadb
-	@docker compose -f ./srcs/docker-compose.yml logs wordpress
-	@docker compose -f ./srcs/docker-compose.yml logs nginx
+stop:
+	@$(COMPOSE) stop
 
-clean: down
-	sudo rm -rf /home/aaleixo-/data/mariadb/*
-	sudo rm -rf /home/aaleixo-/data/wordpress/*
+logs:
+	@$(COMPOSE) logs
 
-ps: 
-	@docker compose -f ./srcs/docker-compose.yml ps
+ps:
+	@$(COMPOSE) ps
+
+clean:
+	@$(COMPOSE) down -v --rmi all
+
+fclean: clean
+	@sudo rm -rf $(DATA)
+
+re: fclean all
+
+.PHONY: all up down start stop logs ps clean fclean re
