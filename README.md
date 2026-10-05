@@ -1,4 +1,4 @@
-*This project has been created as part of the 42 curriculum by <fragarc2>.*
+*This project has been created as part of the 42 curriculum by fragarc2.*
 
 # Inception
 
@@ -10,7 +10,24 @@ Inception builds a small web infrastructure with Docker Compose inside a virtual
 - **wordpress + php-fpm**: WordPress installed and configured automatically with WP-CLI.
 - **mariadb**: the database used by WordPress, initialised on first start.
 
-The three containers share a dedicated Docker network. Database files and website files live in two persistent volumes stored under `/home/<login>/data`. Passwords are provided as Docker secrets, other settings through `srcs/.env`.
+The three containers share a dedicated Docker network. Database files and website files live in two persistent volumes stored under `/home/fragarc2/data`. Passwords are provided as Docker secrets, other settings through `srcs/.env`.
+
+## Project description
+
+### Use of Docker
+
+Each service is built from its own Dockerfile on `debian:bookworm` and runs in its own container. `docker compose`, called by the Makefile, builds the three images, creates the `inception` network, the two volumes and the secrets, and starts the containers. They restart automatically if they crash.
+
+### Sources included
+
+- `Makefile`: builds and runs everything through docker compose (`up`, `down`, `clean`, `fclean`, `re`, ...).
+- `srcs/docker-compose.yml`: the three services, the network, the volumes and the secrets.
+- `srcs/.env`: non-secret settings (domain name, database name and user, site title, usernames, emails).
+- `secrets/` (not committed): the passwords, provided to the containers as Docker secrets.
+- `srcs/requirements/mariadb/`: `Dockerfile`, `50-server.cnf`, and `entry.sh`, which creates the WordPress database and user at startup.
+- `srcs/requirements/wordpress/`: `Dockerfile`, `www.conf` (php-fpm listening on port 9000) and `script.sh`, which installs and configures WordPress with WP-CLI.
+- `srcs/requirements/nginx/`: `Dockerfile` (self-signed certificate) and `nginx.conf` (TLSv1.3 only, PHP forwarded to the wordpress container).
+- `README.md`, `USER_DOC.md`, `DEV_DOC.md`: documentation.
 
 ### Design choices
 
@@ -20,14 +37,14 @@ The three containers share a dedicated Docker network. Database files and websit
 
 **Docker Network vs Host Network.** With host networking a container uses the host's network stack directly, with no isolation and risk of port clashes. A user-defined bridge network (`inception`) gives containers private addresses and DNS by service name (`mariadb`, `wordpress`), and only nginx publishes a port (443).
 
-**Docker Volumes vs Bind Mounts.** A bind mount maps a host path into the container, tied to the host's directory layout. A named volume is managed by Docker and referenced by name. This project uses named volumes configured with the `bind` driver option, so they are declared as volumes in the compose file but the data is stored in `/home/<login>/data`, as the subject requires.
+**Docker Volumes vs Bind Mounts.** A bind mount maps a host path into the container, tied to the host's directory layout. A named volume is managed by Docker and referenced by name. This project uses named volumes configured with the `bind` driver option, so they are declared as volumes in the compose file but the data is stored in `/home/fragarc2/data`, as the subject requires.
 
 ## Instructions
 
-1. Add the domain to `/etc/hosts`: `127.0.0.1 <login>.42.fr`
+1. Add the domain to `/etc/hosts`: `127.0.0.1 fragarc2.42.fr`
 2. Create the secrets (one password per file, in `secrets/`): `db_pass.txt`, `db_root_pass.txt`, `wp_pass.txt`, `user_pass.txt`.
-3. Copy `srcs/.env.example` to `srcs/.env` and fill it in (`DOMAIN_NAME` must be `<login>.42.fr`).
-4. Run `make`, then open `https://<login>.42.fr`.
+3. Check `srcs/.env` (included in the repository, it contains no passwords). `DOMAIN_NAME` must be `fragarc2.42.fr`.
+4. Run `make`, then open `https://fragarc2.42.fr`.
 
 Other targets: `make down`, `make stop`, `make start`, `make logs`, `make ps`, `make clean`, `make fclean`, `make re`. See `USER_DOC.md` and `DEV_DOC.md` for details.
 
